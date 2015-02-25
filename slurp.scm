@@ -130,17 +130,20 @@
 
 (define (slurp:?tag tag def)
   (if (xml-tag:tag? tag)
-      (let ((subtag (filter self (map (lambda (x)
-					(if (slurp:tag-matches? x (car def))
-					    (if (and (> (length def) 1) (or (equal? (caadr def) '?regex)
-									    (equal? (caadr def) '?take-all-regex)))
-					        (if (string-search (multiline (cadadr def))
-								   (xml-tag:innertext x))
-						    x
-						    #f)
-						x)
-					    #f))
-				      (xml-tag:children tag)))))
+      (let ((subtag 
+             (filter self 
+                     (map (lambda (x)
+                            (if (slurp:tag-matches? x (car def))
+                                (if (and (> (length def) 1) 
+                                         (or (equal? (caadr def) '?regex)
+                                             (equal? (caadr def) '?take-all-regex)))
+                                    (if (string-search (multiline (cadadr def))
+                                                       (xml-tag:innertext x))
+                                        x
+                                        #f)
+                                    x)
+                                #f))
+                          (xml-tag:children tag)))))
 	(if (and subtag (not (empty? subtag)))
 	    (if (> (length def) 1)
 	        (xml:slurp (car subtag) (cadr def))
@@ -159,8 +162,9 @@
 	#f)))
 
 (define (slurp:?take-all-regex tag regex)
-  (string-split-fields (multiline regex) (xml-tag:innertext tag) #t))
-
+  (string-split-fields (multiline regex)
+                       (xml-tag:innertext tag)
+                       #t))
 
 (define (slurp:following-nested tag def)
   (let* ((tags (map (lambda (x)
@@ -168,12 +172,15 @@
 			  (cons #t x)
 			  x))
 		    (xml-tag:children tag)))
-	 (thetag (find (lambda (x) (and (list? x) (equal? (car x) #t)))
+	 (thetag (find (lambda (x) 
+                         (and (list? x) 
+                              (equal? (car x) #t)))
 		       tags)))
     (if thetag
 	(let ((test (slurp:following-nested (cdr thetag) def)))
 	  (if test test
-	      (list-item-following (cdr thetag) (xml-tag:children tag))))
+	      (list-item-following (cdr thetag)
+                                   (xml-tag:children tag))))
 	#f)))
 
 (define (list-item-following item list)
@@ -184,22 +191,6 @@
     (if tag
 	(xml:slurp tag (cadr def))
 	#f)))
-					;  (let* ((tags (map (lambda (x)
-					;      (if (xml:slurp x (car def))
-					;  (cons #t x)
-					;  x))
-					;    (xml-tag:children tag)))
-					; (thetag (find (lambda (x) (and (list? x) (equal? (car x) #t)))
-					;       tags))
-					; (nested (slurp:following-nested thetag def)))
-					;    (if thetag
-					;        (car tags)
-					;        (let ((tags (filter not-empty? (map (lambda (x)
-					;                                              (slurp:?find x def))
-					;                                            (xml-tag:children tag)))))
-					;          (if (and tags (not (empty? tags)))
-					;              (car tags)
-					;              tags))))
 
 (define (xml:slurp tag def)
   (if (or (empty? tag) (empty? def)) '()
