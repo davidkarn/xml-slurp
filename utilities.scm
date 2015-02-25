@@ -7,15 +7,18 @@
 (define (delay-function f . a)
   (lambda args
     (apply f (fill-arglist args a))))
+
 (define (->number x)
   (if (number? x) 
       x
       (string->number x)))
+
 (define (->integer i)
   (inexact->exact 
    (round (if (string? i) 
 	      (string->number i)
 	      i))))
+
 (define (fill-arglist args a)
   (cond ((empty? args)
          a)
@@ -25,10 +28,13 @@
          (cons (car args) (fill-arglist (cdr args) (cdr a))))
         (#t
          (cons (car a) (fill-arglist args (cdr a))))))
+
 (define (symbol-prefix prefix sym)
   (string->symbol (s+ (->string prefix) (symbol->string sym))))
+
 (define (symbol-suffix sym suffix)
   (string->symbol (s+ (symbol->string sym) (->string suffix))))
+
 (define !  make-property-condition)
 (define !!  make-composite-condition)
 (define (!? condition #!rest kinds)
@@ -37,15 +43,19 @@
 	   (map (lambda (kind) 
 		  ((condition-predicate kind) condition))
 		kinds))))
+
 (define (s+ . strings)
   (string-concatenate strings))
+
 (define (!-> condition kind key #!optional default)
   (get-condition-property condition kind key (or default #f)))
+
 (define (a-> alis key )
   (let ((cns (assoc key alis)))
     (if (and (list? cns) (empty? (cddr cns)))
 	(second cns)
 	(cdr cns))))
+
 (define (memoize fn)
   (let ((table (make-hash-table equal?)))
     (lambda args
@@ -72,8 +82,11 @@
           (equal? (string-ref str 0) #\!)
           (equal? (string-ref str 0) #\:)
           (equal? (string-ref str 0) #\#))
-      (string-word (substring/shared str 1) (string-concatenate (list str2 (substring/shared str 0 1))))
-      (if (and (not (equal? str2 "")) (equal? (string-take-right str2 1) #\/))
+      (string-word (substring/shared str 1)
+                   (string-concatenate (list str2 
+                                             (substring/shared str 0 1))))
+      (if (and (not (equal? str2 "")) 
+               (equal? (string-take-right str2 1) #\/))
           (cons (string-drop-right str2 1)
                 (string-concatenate (list "/" str)))
           (cons str2 str))))
@@ -84,8 +97,11 @@
 (define (string-word2 str str2)
   (if (and (not (char-set-contains? char-set:whitespace (string-ref str 0)))
 	   (not (equal? (string-ref str 0) #\>)))
-      (string-word2 (substring/shared str 1) (string-concatenate (list str2 (substring/shared str 0 1))))
-      (if (and (not (equal? str2 "")) (equal? (string-take-right str2 1) "/"))
+      (string-word2 (substring/shared str 1)
+                    (string-concatenate (list str2 
+                                              (substring/shared str 0 1))))
+      (if (and (not (equal? str2 "")) 
+               (equal? (string-take-right str2 1) "/"))
           (cons (string-drop-right str2 1)
                 (string-concatenate (list "/" str)))
           (cons str2 str))))
@@ -102,10 +118,15 @@
   (if (not (member quotec (list "'" "\"" " ")))
       (string-word2 (string-concatenate (list quotec string)) quotec)
       (if (string= (substring/shared string 0 1) "\\")
-          (string-quote (substring/shared string 2) quotec (string-concatenate (list quote (substring/shared string 1 2))))
+          (string-quote (substring/shared string 2) 
+                        quotec
+                        (string-concatenate (list quote (substring/shared string 1 2))))
           (if (equal? (substring/shared string 0 1) quotec)
               (cons  quote (substring/shared string 1))
-              (string-quote (substring/shared string 1) quotec (string-concatenate (list quote (substring/shared string 0 1))))))))
+              (string-quote (substring/shared string 1) 
+                            quotec 
+                            (string-concatenate (list quote 
+                                                      (substring/shared string 0 1))))))))
 
 (define *word-charset* (char-set #\space #\tab #\newline #\/ #\> #\& #\=))
 
@@ -122,7 +143,9 @@
         (substring/shared str (+ index (string-length pre))))))
 
 (define (unnest list)
-  (if (and (not (empty? list)) (empty? (cdr list)) (list? (car list))
+  (if (and (not (empty? list)) 
+           (empty? (cdr list))
+           (list? (car list))
            (all-lists (car list)))
       (unnest (car list))
       list))
@@ -176,7 +199,8 @@
       ""
       (if (equal? (car strlis) #\')
 	  (s+ "\'" (escape-quotes (cdr strlis)))
-	  (s+ (->string (car strlis)) (escape-quotes (cdr strlis))))))
+	  (s+ (->string (car strlis))
+              (escape-quotes (cdr strlis))))))
 
 (define (arglist->cmdline argslist)
   (string-join (map escape-arg argslist) " "))
@@ -184,9 +208,9 @@
 (define (alist-update alist . key-values)
   (if (empty? key-values) 
       alist
-      (let ((key (car key-values))
+      (let ((key   (car key-values))
 	    (value (cadr key-values))
-	    (rest (cddr key-values)))
+	    (rest  (cddr key-values)))
 	(apply alist-update 
 	       (cons (alist-cons key value 
 				 (alist-delete key alist))
@@ -207,7 +231,12 @@
 
 (define (assoc->postdata a)
   (string-join 
-   (map (lambda (r) (s+ (urlencode (car r)) "=" (urlencode (if (list? r) (cadr r) (cdr r)))))
+   (map (lambda (r) 
+          (s+ (urlencode (car r))
+              "=" 
+              (urlencode (if (list? r) 
+                             (cadr r) 
+                             (cdr r)))))
 	a)
    "&"))
 
@@ -218,7 +247,8 @@
   (->integer (current-seconds)))
 
 (define (file-put-buffer fn string)
-  (let ((f (file-open fn (+ open/wronly open/creat open/trunc))))
+  (let ((f (file-open fn
+                      (+ open/wronly open/creat open/trunc))))
     (file-write f string)
     (file-close f)
     fn))

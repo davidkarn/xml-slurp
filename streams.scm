@@ -36,20 +36,22 @@
   stream)
 
 (define (stream-trim-port! stream)
-  (do ((c (peek-char (second stream)) (peek-char (second stream))))
+  (do ((c (peek-char (second stream))
+          (peek-char (second stream))))
       ((or
         (equal? c #!eof)
-        (not (char-set-contains? (char-set #\space #\newline #\return #\tab) c)))
+        (not (char-set-contains? (char-set #\space #\newline #\return #\tab)
+                                 c)))
        stream)
     (read-byte (second stream))))
 
 (define (substream-from stream index)
   (if (< index (string-length (first stream)))
       (list (substring/shared (first stream) index)
-            (second stream)
-            )
+            (second stream))
       (begin
-        (stream-read-string stream (- index (string-length (first stream))))
+        (stream-read-string stream
+                            (- index (string-length (first stream))))
         (list "" (second stream)))))
 
 (define (stream-read-string stream chars)
@@ -106,14 +108,17 @@
 (define (stream->substring stream a b)
   (if (> (string-length (car stream)) b)
       (substring/shared (car stream) a b)
-      (string-concatenate (list (substring/shared (car stream) a)
-                                (stream-read-string stream (- b (string-length (car stream))))))))
+      (string-concatenate 
+       (list (substring/shared (car stream) a)
+             (stream-read-string stream 
+                                 (- b (string-length (car stream))))))))
 
 (define (stream-word! str str2)
   (let ((index (stream-charset-index str *word-charset*)))
     (if (not index)
         (cons "" str)
-        (cons (substring/shared (car str) 0 index) (list (substring/shared (car str) index) (second str))))))
+        (cons (substring/shared (car str) 0 index) 
+              (list (substring/shared (car str) index) (second str))))))
 
 
 (define (stream-quote stream1)
@@ -125,11 +130,12 @@
 	  (do ((indices (list)))
 	      ((or (equal? index 0)
 		   (not (equal? (string-ref (car stream) (- index 1)) #\\)))
-	       (let ((str (string-drop-right (car stream) 1))) ;(stream->substring stream 0 index)))
+	       (let ((str (string-drop-right (car stream) 1))) 
 		 (do ((indices indices (cdr indices)))
 		     ((empty? indices) (cons str (substream-from stream (+ 1 index))))
-		   (set! str (string-concatenate (list (substring/shared str 0 (- (car indices) 1))
-						       (substring/shared str (car indices))))))))
+		   (set! str (string-concatenate 
+                              (list (substring/shared str 0 (- (car indices) 1))
+                                    (substring/shared str (car indices))))))))
 	    (set! indices (cons index indices))
 	    (set! index (stream-eq-index stream quotec (+ index 1))))))))
 
